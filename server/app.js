@@ -1,5 +1,5 @@
 
-const express = require('express') /* commonJS */
+const express = require('express') 
 const morgan = require('morgan')
 
 class Server {
