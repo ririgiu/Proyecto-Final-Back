@@ -12,6 +12,7 @@ class Server {
     middleware(){
         this.app.use(express.json())
         this.app.use(morgan('dev'))
+        this.app.use(express.static('public'))
     }
 
 
