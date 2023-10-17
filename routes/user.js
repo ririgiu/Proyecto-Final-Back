@@ -1,6 +1,6 @@
 const {Router} = require ('express')
 const {check} = require('express-validator')
-const { getAllUser, getOneUser, createUser, updateUser, deleteUser, loginUser } = require('../controllers/user')
+const { getAllUser, getOneUser, updateUser, deleteUser, loginUser, createUser } = require('../controllers/user')
 const router = Router()
 
 router.get('/', getAllUser)
@@ -8,7 +8,7 @@ router.get('/:id',[
     check('id', 'Formato ID incorrecto').isMongoId()
 ], getOneUser)
 
-router.post('/register',[
+router.post('/',[
     check('userName', 'campo de USERNAME vacio').notEmpty(),
     check('userName', ' MAX: 50 caracteres').isLength({ max: 50}),
     check('pass', 'campo de CONTRASEÑA vacio').notEmpty(),   

@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken')
 const getAllUser = async (req, res) => {
     try {
         const allUsers = await UserModel.find()
-        res.status(200).json({ msg: 'usuarios encontrados', allUsers })
+        res.status(200).json({ msg: 'Usuarios encontrados', allUsers })
     } catch (error) {
         res.status(500).json({ error })
     }
@@ -37,16 +37,18 @@ const createUser = async (req, res) => {
         }
         const userExist = await UserModel.findOne({ username: req.body.username })
         if (userExist) {
-            return res.status(400).json({ msg: 'el usuario ya existe' })
+            return res.status(409).json(`El usuario ${req.body.username}, ya existe`)
         }
 
+
         const newUser = new UserModel(req.body)
-        const salt = await bcrypt.genSaltSync()
-        newUser.pass = await bcrypt.hash(req.body.pass, salt)
+
+        const salt = await bcrypt.genSaltSync(10);
+        newUser.pass = await bcrypt.hash(newUser.pass, salt)
         await newUser.save()
-        res.status(201).json({ msg: 'usuario creado correctamente', newUser })
+        res.status(201).json({ msg: "Usuario creado", newUser })
     } catch (error) {
-        res.status(500).json({ msg: 'error', error })
+        console.log(error)
     }
 }
 
@@ -82,28 +84,36 @@ const loginUser = async (req, res) => {
         if (!errors.isEmpty()) {
             return res.status(422).json({ msg: errors.array() })
         }
-
-        const userExist = await UserModel.findOne({ username: req.body.username })
+        const userExist = await UserModel.findOne({ username: req.body.username})
         if (!userExist) {
-            return res.status(400).json({ msg: 'el usuario no existe' })
+            return res.status(400).json({msg: 'No se encuentra el usuario'})
         }
         const passCheck = await bcrypt.compare(req.body.pass, userExist.pass)
-        if (passCheck) {
-             const payload_jwt = {
-                user:{
-                    id : userExist._id,
-                    role:userExist.role
-                }
-             }   
+        
+        if(passCheck){
 
-        const token = jwt.sign(payload_jwt, '')
-            res.status(200).json({ msg: 'usuario logueado', token })
-        } else {
-            res.status(400).json({ msg: 'usuario y/o contraseña incorrecta' })
+    const payload_jwt = {
+        user:{
+            id : userExist._id,
+            role: userExist.role
+            
+        }
+    }
+
+    const token = jwt.sign(payload_jwt, process.env.SECRET_KEY)
+    userExist.token = token
+    const updateData = await UserModel.findByIdAndUpdate ({_id: userExist._id}, userExist, {new: true})
+
+
+
+            res.status(200).json({msg:'Usuario logueado', updateData})
+        }else{
+            res.status(400).json({msg:'Usuario y/o contraseña incorrecta'})
+
         }
 
     } catch (error) {
-        res.status(500).json({ msg: 'error', error })
+       res.status(500).json({msg: 'Error al iniciar sesion'})
     }
 }
 
@@ -120,7 +130,12 @@ const logout = async (req, res) => {
 
 
 module.exports = {
-    getAllUser, getOneUser, createUser, updateUser, deleteUser, loginUser
+    getAllUser,
+    getOneUser,
+    createUser,
+    updateUser,
+    deleteUser,
+    loginUser
 }
 
 
